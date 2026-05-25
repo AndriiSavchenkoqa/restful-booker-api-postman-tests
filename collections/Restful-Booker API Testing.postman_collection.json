@@ -1,0 +1,1570 @@
+{
+  "info": {
+    "_postman_id": "3413dfcb-725b-4684-ba7e-9bf70cb0b73d",
+    "name": "Restful-Booker API Testing",
+    "description": "# Welcome to Restful-Booker!\n\n***Can you find all the bugs in this API?***\n\nWelcome to Restful-booker an API that you can use to learn more about API Testing or try out API testing tools against. Restful-booker is a **C**reate **R**ead **U**pdate **D**elete Web API that comes with authentication features and loaded with a bunch of bugs for you to explore.\n\n## Where is the API?\n\nYou can find the code for Restful-booker on GitHub here: [https://github.com/mwinteringham/restful-booker](https://github.com/mwinteringham/restful-booker)\n\nYou can find a deployed instance at [https://restful-booker.herokuapp.com/](https://restful-booker.herokuapp.com/)\n\nThe API comes pre-loaded with 10 records for you to work with **and resets itself every 10 minutes back to that default state.** It also comes with [detailed API documentation](https://restful-booker.herokuapp.com/apidoc/index.html) to help get you started with your API testing straight away.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "30671211"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "/ping - HealthCheck",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/ping",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "ping"
+                  ]
+                },
+                "description": "A simple GET request that informs us whether the API is up and running."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "wrong endpoint",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 404 for invalid endpoint\", function () {\r",
+                      "    pm.response.to.have.status(404);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/ping123",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "ping123"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "/auth - CreateToken",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Token exists\", function () {\r",
+                      "    pm.expect(jsonData.token).to.exist;\r",
+                      "    pm.expect(jsonData.token).to.be.a(\"string\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.environment.set(\"token\", jsonData.token);\r",
+                      "\r",
+                      "// The token exists 10 minutes. Then needs to be regenerated again."
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"username\" : \"{{username}}\",\n    \"password\" : \"{{password}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/auth",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "auth"
+                  ]
+                },
+                "description": "Sending a request to this endpoint will generate a token that can be used in the Cookie header for PUT /booking/{id} and DELETE /booking/{id}"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "/auth - CreateToken invalid creds",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Invalid credentials do not return token\", function () {\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.token).to.be.undefined;\r",
+                      "    pm.expect(jsonData.reason).to.exist;\r",
+                      "    });\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"username\" : \"{{username}}\",\n    \"password\" : \"WrongPassword\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/auth",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "auth"
+                  ]
+                },
+                "description": "Sending a request to this endpoint will generate a token that can be used in the Cookie header for PUT /booking/{id} and DELETE /booking/{id}"
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "/booking - GetBookingIds (Query all IDs)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}/booking",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ]
+                },
+                "description": "Requests the IDs for all existing bookings that exist within the API"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking - CreateBooking",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Booking ID is created\", function () {\r",
+                      "    pm.expect(jsonData.bookingid).to.exist;\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Users passport data is correct\", function () {\r",
+                      "    pm.expect(jsonData.booking.firstname).to.eql(\"John\");\r",
+                      "    pm.expect(jsonData.booking.lastname).to.eql(\"malkovich\");\r",
+                      "});\r",
+                      "\r",
+                      "pm.environment.set(\"firstname\", jsonData.booking.firstname);\r",
+                      "\r",
+                      "pm.environment.set(\"lastname\", jsonData.booking.lastname);\r",
+                      "\r",
+                      "\r",
+                      "pm.test(\"Booking data is correct\", function () {\r",
+                      "    pm.expect(jsonData.booking.totalprice).to.eql(111);\r",
+                      "    pm.expect(jsonData.booking.depositpaid).to.eql(true);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Price is above 0\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.booking.totalprice).to.be.above(0);\r",
+                      "});\r",
+                      "\r",
+                      "pm.environment.set(\"bookingId\", jsonData.bookingid);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "const requestBody = JSON.parse(pm.request.body.raw);\r",
+                      "\r",
+                      "const checkinDate = new Date(requestBody.bookingdates.checkin);\r",
+                      "const checkoutDate = new Date(requestBody.bookingdates.checkout);\r",
+                      "const today = new Date();\r",
+                      "\r",
+                      "// прибираємо час для коректного порівняння\r",
+                      "today.setHours(0,0,0,0);\r",
+                      "checkinDate.setHours(0,0,0,0);\r",
+                      "checkoutDate.setHours(0,0,0,0);\r",
+                      "\r",
+                      "pm.test(\"Checkin date should not be in the past\", function () {\r",
+                      "    pm.expect(checkinDate.getTime()).to.be.at.least(today.getTime());\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Checkout date should be after checkin date\", function () {\r",
+                      "    pm.expect(checkoutDate.getTime()).to.be.greaterThan(checkinDate.getTime());\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Checkin date should be valid\", function () {\r",
+                      "    pm.expect(isNaN(checkinDate.getTime())).to.eql(false);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Checkout date should be valid\", function () {\r",
+                      "    pm.expect(isNaN(checkoutDate.getTime())).to.eql(false);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"Jonh\",\n    \"lastname\" : \"Malkovich\",\n    \"totalprice\" : 111,\n    \"depositpaid\" : true,\n    \"bookingdates\" : {\n        \"checkin\" : \"2026-05-25\",\n        \"checkout\" : \"2026-06-10\"\n    },\n    \"additionalneeds\" : \"Breakfast\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ]
+                },
+                "description": "Request that allows you to create a Booking within the API. This request creates the booking using JSON."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - GetBooking (ID)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "\r",
+                      "pm.test(\"Booking contains necessary fields\", function () {\r",
+                      "    pm.expect(jsonData).to.have.property(\"firstname\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"lastname\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"totalprice\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"depositpaid\");\r",
+                      "    pm.expect(jsonData.depositpaid).to.eql(true);\r",
+                      "    pm.expect(jsonData).to.have.property(\"bookingdates\");\r",
+                      "\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkin\");\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkout\");\r",
+                      "    pm.expect(jsonData.totalprice).to.eql(111);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Price is above 0\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "\r",
+                      "pm.expect(jsonData.totalprice).to.be.above(0);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Requests a specific booking that exists within the API. To get a list of valid booking IDs using GetBookingIds calls."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking - GetBookingIds (Filter by name)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Created booking id exists in searc results\", function () {\r",
+                      "    const bookingIds = jsonData.map(item => item.bookingid); \r",
+                      "    pm.expect(bookingIds).to.include(Number(pm.environment.get(\"bookingId\")));\r",
+                      "});\r",
+                      "\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/booking?firstname={{firstname}}&lastname={{lastname}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ],
+                  "query": [
+                    {
+                      "key": "firstname",
+                      "value": "{{firstname}}"
+                    },
+                    {
+                      "key": "lastname",
+                      "value": "{{lastname}}"
+                    }
+                  ]
+                },
+                "description": "Requests all Booking IDs that match the firstname AND lastname provided in the query string. You can also query by firstname or lastname alone."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking - GetBookingIds (Filter by date)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"BUG: Created booking is not found by date filter\", function () {\r",
+                      "    const bookingIds = jsonData.map(item => item.bookingid);\r",
+                      "\r",
+                      "    pm.expect(bookingIds).to.include(Number(pm.environment.get(\"bookingId\")));\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/booking?checkin=2026-05-25&checkout=2026-06-10",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ],
+                  "query": [
+                    {
+                      "key": "checkin",
+                      "value": "2026-05-25"
+                    },
+                    {
+                      "key": "checkout",
+                      "value": "2026-06-10"
+                    }
+                  ]
+                },
+                "description": "Requests all Booking IDs that are within the checkin AND checkout provided in the query string. You can also query by checking or checkout alone."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - UpdateBooking",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "\r",
+                      "pm.test(\"Booking contains necessary fields\", function () {\r",
+                      "    pm.expect(jsonData.firstname).to.eql(\"Pes\");\r",
+                      "        pm.environment.set(\"UpdFirstname\", jsonData.firstname)\r",
+                      "    pm.expect(jsonData.lastname).to.eql(\"Patron\");\r",
+                      "        pm.environment.set(\"UpdLastname\", jsonData.lastname)\r",
+                      "    pm.expect(jsonData).to.have.property(\"totalprice\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"depositpaid\");\r",
+                      "    pm.expect(jsonData.depositpaid).to.eql(true);\r",
+                      "    pm.expect(jsonData).to.have.property(\"bookingdates\");\r",
+                      "\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkin\");\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkout\");\r",
+                      "    pm.expect(jsonData.totalprice).to.eql(999);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Price is above 0\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "\r",
+                      "pm.expect(jsonData.totalprice).to.be.above(0);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "{{password}}",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "{{username}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123",
+                    "disabled": true
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"Pes\",\n    \"lastname\" : \"Patron\",\n    \"totalprice\" : 999,\n    \"depositpaid\" : true,\n    \"bookingdates\" : {\n        \"checkin\" : \"2026-05-27\",\n        \"checkout\" : \"2026-01-10\"\n    },\n    \"additionalneeds\" : \"Minibar\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Request that allows you to update a complete Booking within the API. This request updates the booking using JSON.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1.  **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n2.  **Cookie based -** Create a cookie header with the value `token=abc123`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - GetUPDBooking (ID)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "\r",
+                      "pm.test(\"Booking contains necessary fields\", function () {\r",
+                      "    pm.expect(jsonData).to.have.property(\"firstname\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"lastname\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"totalprice\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"depositpaid\");\r",
+                      "    pm.expect(jsonData.depositpaid).to.eql(true);\r",
+                      "    pm.expect(jsonData).to.have.property(\"bookingdates\");\r",
+                      "\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkin\");\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkout\");\r",
+                      "    pm.expect(jsonData.totalprice).to.eql(999);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Price is above 0\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "\r",
+                      "pm.expect(jsonData.totalprice).to.be.above(0);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Requests a specific booking that exists within the API. To get a list of valid booking IDs using GetBookingIds calls."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - PartialUpdateBooking",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "\r",
+                      "pm.test(\"Booking contains necessary fields\", function () {\r",
+                      "    pm.expect(jsonData).to.have.property(\"firstname\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"lastname\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"totalprice\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"depositpaid\");\r",
+                      "    pm.expect(jsonData.depositpaid).to.eql(true);\r",
+                      "    pm.expect(jsonData).to.have.property(\"bookingdates\");\r",
+                      "\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkin\");\r",
+                      "    pm.expect(jsonData.bookingdates).to.have.property(\"checkout\");\r",
+                      "    pm.expect(jsonData).to.have.property(\"additionalneeds\");\r",
+                      "    pm.expect(jsonData.totalprice).to.eql(999);\r",
+                      "});\r",
+                      "\r",
+                      "\r",
+                      "pm.test(\"Updated fields are saved\", function () {\r",
+                      "    pm.expect(jsonData.firstname).to.eql(\"James\");\r",
+                      "    pm.expect(jsonData.lastname).to.eql(\"Brown\");\r",
+                      "    pm.expect(jsonData.additionalneeds).to.eql(\"Parking\");\r",
+                      "});\r",
+                      "\r",
+                      "\r",
+                      "pm.test(\"Price is above 0\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "\r",
+                      "pm.expect(jsonData.totalprice).to.be.above(0);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "{{password}}",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "{{username}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123",
+                    "disabled": true
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"James\",\n    \"lastname\" : \"Brown\",\n    \"additionalneeds\": \"Parking\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Request that allows you to update a partial section of a Booking within the API. This request updates the booking using JSON.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1.  **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n2.  **Cookie based -** Create a cookie header with the value `token=abc123`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - DeleteBooking",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 201\", function () {\r",
+                      "    pm.response.to.have.status(201);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "{{password}}",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "{{username}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token={{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Request that allows you to delete a Booking within the API.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1. **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n    \n2. **Cookie based -** Create a cookie header with the`token variable from the environment`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - GetBooking (ID)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 404 Not Found\", function () {\r",
+                      "    pm.response.to.have.status(404);\r",
+                      "});\r",
+                      "\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Requests a specific booking that exists within the API. To get a list of valid booking IDs using GetBookingIds calls."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "/booking - CreateBooking missing or invalid fields",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Required field is missing\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422, 500]);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"BUG: API returns 500 instead of validation error when firstname is missing\", function () {\r",
+                      "    pm.response.to.have.status(500);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"{{firstname}}\",\n    \"totalprice\" : 111,\n    \"depositpaid\" : true,\n    \"bookingdates\" : {\n        \"checkin\" : \"2026-05-25\",\n        \"checkout\" : \"2026-06-10\"\n    },\n    \"additionalneeds\" : \"Breakfast\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ]
+                },
+                "description": "Request that allows you to create a Booking within the API. This request creates the booking using JSON."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking - CreateBooking invalid price",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Booking ID is created\", function () {\r",
+                      "    pm.expect(jsonData.bookingid).to.exist;\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Booking data is correct\", function () {\r",
+                      "    pm.expect(jsonData.booking.firstname).to.eql(pm.environment.get(\"firstname\"));\r",
+                      "    pm.expect(jsonData.booking.lastname).to.eql(pm.environment.get(\"lastname\"));\r",
+                      "    pm.expect(jsonData.booking.depositpaid).to.eql(true);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"BUG: API accepts negative totalprice\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "    pm.expect(jsonData.booking.totalprice).to.be.above(0);\r",
+                      "});\r",
+                      "\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "const requestBody = JSON.parse(pm.request.body.raw);\r",
+                      "\r",
+                      "const totalPrice = requestBody.totalprice;\r",
+                      "\r",
+                      "pm.test(\"Negative test data: totalprice is less than zero\", function () {\r",
+                      "    pm.expect(totalPrice).to.be.above(0);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"{{firstname}}\",\n    \"lastname\" : \"{{lastname}}\",\n    \"totalprice\" : -1100,\n    \"depositpaid\" : true,\n    \"bookingdates\" : {\n        \"checkin\" : \"2022-01-01\",\n        \"checkout\" : \"2022-01-10\"\n    },\n    \"additionalneeds\" : \"Breakfast\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ]
+                },
+                "description": "Request that allows you to create a Booking within the API. This request creates the booking using JSON."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking - Create Invalid Date",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"BUG: API should reject booking with past checkin date\", function () {\r",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422, 500]);\r",
+                      "});\r",
+                      "\r",
+                      "if (pm.response.code === 200) {\r",
+                      "\r",
+                      "    const jsonData = pm.response.json();\r",
+                      "\r",
+                      "    const checkinDate = new Date(jsonData.booking.bookingdates.checkin);\r",
+                      "    const today = new Date();\r",
+                      "\r",
+                      "    today.setHours(0,0,0,0);\r",
+                      "    checkinDate.setHours(0,0,0,0);\r",
+                      "\r",
+                      "    pm.test(\"BUG: API accepts past checkin date\", function () {\r",
+                      "        pm.expect(checkinDate < today).to.eql(true);\r",
+                      "    });\r",
+                      "\r",
+                      "}"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "const requestBody = JSON.parse(pm.request.body.raw);\r",
+                      "\r",
+                      "const checkinDate = new Date(requestBody.bookingdates.checkin);\r",
+                      "const checkoutDate = new Date(requestBody.bookingdates.checkout);\r",
+                      "const today = new Date();\r",
+                      "\r",
+                      "// прибираємо час для коректного порівняння\r",
+                      "today.setHours(0,0,0,0);\r",
+                      "checkinDate.setHours(0,0,0,0);\r",
+                      "checkoutDate.setHours(0,0,0,0);\r",
+                      "\r",
+                      "pm.test(\"Checkin date should not be in the past\", function () {\r",
+                      "    pm.expect(checkinDate.getTime()).to.be.at.least(today.getTime());\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Checkout date should be after checkin date\", function () {\r",
+                      "    pm.expect(checkoutDate.getTime()).to.be.greaterThan(checkinDate.getTime());\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Checkin date should be valid\", function () {\r",
+                      "    pm.expect(isNaN(checkinDate.getTime())).to.eql(false);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Checkout date should be valid\", function () {\r",
+                      "    pm.expect(isNaN(checkoutDate.getTime())).to.eql(false);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"{{firstname}}\",\n    \"lastname\" : \"{{lastname}}\",\n    \"totalprice\" : 111,\n    \"depositpaid\" : true,\n    \"bookingdates\" : {\n        \"checkin\" : \"2022-99-25\",\n        \"checkout\" : \"2021-31-10\"\n    },\n    \"additionalneeds\" : \"Breakfast\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ]
+                },
+                "description": "Request that allows you to create a Booking within the API. This request creates the booking using JSON."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking - GetBookingIds (Filter by invalid name)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {\r",
+                      "    pm.response.to.have.status(200);\r",
+                      "});\r",
+                      "\r",
+                      "const jsonData = pm.response.json();\r",
+                      "\r",
+                      "pm.test(\"Search results should be empty for invalid name\", function () {\r",
+                      "    pm.expect(jsonData.length).to.eql(0);\r",
+                      "});\r",
+                      "\r",
+                      "pm.test(\"Created booking id exists in search results\", function () {\r",
+                      "    const bookingIds = jsonData.map(item => item.bookingid); \r",
+                      "    pm.expect(bookingIds).to.include(Number(pm.environment.get(\"bookingId\")));\r",
+                      "});\r",
+                      "\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{host}}/booking?firstname=Pes&lastname=Patron",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking"
+                  ],
+                  "query": [
+                    {
+                      "key": "firstname",
+                      "value": "Pes"
+                    },
+                    {
+                      "key": "lastname",
+                      "value": "Patron"
+                    }
+                  ]
+                },
+                "description": "Requests all Booking IDs that match the firstname AND lastname provided in the query string. You can also query by firstname or lastname alone."
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - PartialUpdateBooking No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403 Forbidden\", function () {\r",
+                      "    pm.response.to.have.status(403);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123",
+                    "disabled": true
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"James\",\n    \"lastname\" : \"Brown\",\n    \"additionalneeds\": \"Parking\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Request that allows you to update a partial section of a Booking within the API. This request updates the booking using JSON.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1.  **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n2.  **Cookie based -** Create a cookie header with the value `token=abc123`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - PartialUpdateBooking invalidID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"API returns 405 for PATCH request with invalid booking ID\", function () {\r",
+                      "    pm.response.to.have.status(405);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "{{password}}",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "{{username}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123",
+                    "disabled": true
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"James\",\n    \"lastname\" : \"Brown\",\n    \"additionalneeds\": \"Parking\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking/000",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "000"
+                  ]
+                },
+                "description": "Request that allows you to update a partial section of a Booking within the API. This request updates the booking using JSON.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1.  **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n2.  **Cookie based -** Create a cookie header with the value `token=abc123`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - UpdateBooking No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403 Forbidden\", function () {\r",
+                      "    pm.response.to.have.status(403);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123",
+                    "disabled": true
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"Pes\",\n    \"lastname\" : \"Patron\",\n    \"totalprice\" : 999,\n    \"depositpaid\" : true,\n    \"bookingdates\" : {\n        \"checkin\" : \"2026-05-27\",\n        \"checkout\" : \"2026-01-10\"\n    },\n    \"additionalneeds\" : \"Minibar\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Request that allows you to update a complete Booking within the API. This request updates the booking using JSON.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1.  **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n2.  **Cookie based -** Create a cookie header with the value `token=abc123`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - UpdateBooking invalidID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"API returns 405 for PATCH request with invalid booking ID\", function () {\r",
+                      "    pm.response.to.have.status(405);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "{{password}}",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "{{username}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123",
+                    "disabled": true
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstname\" : \"Pes\",\n    \"lastname\" : \"Patron\",\n    \"totalprice\" : 999,\n    \"depositpaid\" : true,\n    \"bookingdates\" : {\n        \"checkin\" : \"2026-05-27\",\n        \"checkout\" : \"2026-01-10\"\n    },\n    \"additionalneeds\" : \"Minibar\"\n}"
+                },
+                "url": {
+                  "raw": "{{host}}/booking/-1111",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "-1111"
+                  ]
+                },
+                "description": "Request that allows you to update a complete Booking within the API. This request updates the booking using JSON.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1.  **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n2.  **Cookie based -** Create a cookie header with the value `token=abc123`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - DeleteBooking No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403 Forbidden\", function () {\r",
+                      "    pm.response.to.have.status(403);\r",
+                      "});\r",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123"
+                  }
+                ],
+                "url": {
+                  "raw": "{{host}}/booking/{{bookingId}}",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "{{bookingId}}"
+                  ]
+                },
+                "description": "Request that allows you to delete a Booking within the API.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1. **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n    \n2. **Cookie based -** Create a cookie header with the`token variable from the environment`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            },
+            {
+              "name": "/booking/:id - DeleteBooking invalidID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"API returns 405 for PATCH request with invalid booking ID\", function () {\r",
+                      "    pm.response.to.have.status(405);\r",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "{{password}}",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "{{username}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Cookie",
+                    "value": "token=abc123"
+                  }
+                ],
+                "url": {
+                  "raw": "{{host}}/booking/-2228",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "booking",
+                    "-2228"
+                  ]
+                },
+                "description": "Request that allows you to delete a Booking within the API.\n\n**Authorisation**\n\nThis request requires you to be authorised. Which can be done in one of two ways:\n\n1. **Basic Auth -** Create a basic authorization header using Basic Auth with the credentials admin/password123\n    \n2. **Cookie based -** Create a cookie header with the`token variable from the environment`. To get a valid token, send a request to `POST /auth`"
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Clear Environment Variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cleanup service is available\", function () {\r",
+                  "    pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "[\r",
+                  "    \"token\",\r",
+                  "    \"bookingId\",\r",
+                  "    \"firstname\",\r",
+                  "    \"lastname\",\r",
+                  "    \"UpdFirstname\",\r",
+                  "    \"UpdLastname\"\r",
+                  "].forEach(function (variable) {\r",
+                  "    pm.environment.unset(variable);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Environment variables are cleaned\", function () {\r",
+                  "    pm.expect(pm.environment.get(\"token\")).to.be.undefined;\r",
+                  "    pm.expect(pm.environment.get(\"bookingId\")).to.be.undefined;\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{host}}/ping",
+              "host": [
+                "{{host}}"
+              ],
+              "path": [
+                "ping"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
