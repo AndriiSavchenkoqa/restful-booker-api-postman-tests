@@ -1,0 +1,10 @@
+# Postman environments
+*.postman_environment.json
+!*.postman_environment.example.json
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
